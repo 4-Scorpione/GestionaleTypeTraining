@@ -8,8 +8,8 @@ i propri frequentatori, istruttori e programmi.
 
 | Link | Cosa mostra |
 |---|---|
-| https://pier-200.github.io/GestionaleTypeTraining/ | l'applicazione (si installa sul cellulare come app **TT**) |
-| https://pier-200.github.io/GestionaleTypeTraining/?demo | prova con la situazione esempio, dati solo nel browser |
+| https://4-scorpione.github.io/GestionaleTypeTraining/ | l'applicazione (si installa sul cellulare come app **TT**) |
+| https://4-scorpione.github.io/GestionaleTypeTraining/?demo | prova con la situazione esempio, dati solo nel browser |
 
 Aperto un corso si entra in **Avanzamento del corso**: parte teorica e parte pratica affiancate, modulo per modulo
 (ore svolte sul programma MTT; task eseguiti sul PTR, con la soglia del 50%). Le due barre MTT/PTT restano sempre
@@ -188,7 +188,7 @@ I format ufficiali stanno in una cartella **`modelli/`** e l'applicazione usa so
 | Excel delle abilitazioni (quando ci sarà) | importato dalla pagina «Materie e istruttori» |
 | `logo.png` (facoltativo) | logo sul Compliance Report |
 
-**Dove stanno.** Online i modelli stanno nel **repository privato dei dati** (`pier-200/tt-dati`, cartella
+**Dove stanno.** Online i modelli stanno nel **repository privato dei dati** (`4-Scorpione/tt-dati`, cartella
 `modelli/`), come i dati dei corsi: l'applicazione li legge con il token del portachiavi, quindi **solo dopo
 l'accesso**. Il sito pubblicato non li contiene e GitHub, senza token, risponde «non trovato».
 
@@ -253,7 +253,7 @@ Come il Gestionale PdS, l'applicazione usa **solo GitHub** (nessun database este
 
 | `archivio.tipo` | Dove stanno i dati | Aggiornamento |
 |---|---|---|
-| `github` (in uso) | repository **privato** `pier-200/tt-dati` (dati e modelli) + portachiavi cifrato nel repository pubblico `pier-200/tt-accessi` | controllo ogni 30 s |
+| `github` (in uso) | repository **privato** `4-Scorpione/tt-dati` (dati e modelli) + portachiavi cifrato nel repository pubblico `4-Scorpione/tt-accessi` | controllo ogni 30 s |
 | `demo` (sempre con `?demo`) | nel browser di chi apre l'app, situazione esempio | tra schede |
 
 - **Chi legge i dati**: solo chi accede. Il token GitHub che apre `tt-dati` sta nel portachiavi, cifrato

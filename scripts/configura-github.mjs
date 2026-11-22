@@ -78,7 +78,7 @@ async function main() {
   await scrivi(repoAccessi, 'keyring.json', `${JSON.stringify(keyring, null, 2)}\n`, 'Configurazione iniziale del portachiavi');
 
   console.log(`Archivio GitHub configurato: Training Manager "${username}" su ${owner}/${repoDati}.`);
-  console.log('Accesso: https://pier-200.github.io/GestionaleTypeTraining/');
+  console.log('Accesso: https://4-scorpione.github.io/GestionaleTypeTraining/');
 }
 
 main().catch((e) => {

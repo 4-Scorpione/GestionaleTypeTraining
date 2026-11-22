@@ -1,20 +1,20 @@
 # Pubblicazione e archivio su GitHub
 
-L'app è online su **https://pier-200.github.io/GestionaleTypeTraining/** e, come il Gestionale PdS, usa **solo
+L'app è online su **https://4-scorpione.github.io/GestionaleTypeTraining/** e, come il Gestionale PdS, usa **solo
 GitHub**: nessun database esterno, nessun computer da tenere acceso.
 
 | Link | A chi |
 |---|---|
-| `https://pier-200.github.io/GestionaleTypeTraining/` | tutti (un'unica applicazione, pagine secondo il ruolo) |
-| `https://pier-200.github.io/GestionaleTypeTraining/?demo` | prova con dati finti, salvati solo nel browser |
+| `https://4-scorpione.github.io/GestionaleTypeTraining/` | tutti (un'unica applicazione, pagine secondo il ruolo) |
+| `https://4-scorpione.github.io/GestionaleTypeTraining/?demo` | prova con dati finti, salvati solo nel browser |
 
 ## Come è fatto
 
 | Repository | Visibilità | Contenuto |
 |---|---|---|
-| `pier-200/GestionaleTypeTraining` | pubblico | il codice; il ramo `gh-pages` è il sito (GitHub Pages) |
-| `pier-200/tt-dati` | **privato** | i dati (`db/…`: account, corsi, frequentatori, logbook, programmi settimanali, presenze, certificati) e i **modelli** (`modelli/…`) |
-| `pier-200/tt-accessi` | pubblico | solo `keyring.json`, il portachiavi **cifrato** |
+| `4-Scorpione/GestionaleTypeTraining` | pubblico | il codice; il ramo `gh-pages` è il sito (GitHub Pages) |
+| `4-Scorpione/tt-dati` | **privato** | i dati (`db/…`: account, corsi, frequentatori, logbook, programmi settimanali, presenze, certificati) e i **modelli** (`modelli/…`) |
+| `4-Scorpione/tt-accessi` | pubblico | solo `keyring.json`, il portachiavi **cifrato** |
 
 - Il sito non contiene dati né modelli, tranne i due moduli vuoti che servono alla demo (programma settimanale e
   Compliance Report, uguali per tutti i corsi). Per leggere dati e modelli serve il token di `tt-dati`, che sta nel portachiavi cifrato
@@ -27,7 +27,7 @@ GitHub**: nessun database esterno, nessun computer da tenere acceso.
 `public/config.json` punta già ai due repository:
 
 ```json
-{ "archivio": { "tipo": "github", "owner": "pier-200", "repoDati": "tt-dati", "repoAccessi": "tt-accessi", "branch": "main" } }
+{ "archivio": { "tipo": "github", "owner": "4-Scorpione", "repoDati": "tt-dati", "repoAccessi": "tt-accessi", "branch": "main" } }
 ```
 
 ## Stato (14/10/2026)
@@ -51,7 +51,7 @@ L'applicazione accetta solo token fine-grained (`github_pat_…`): un token clas
 
 In uno dei due modi:
 
-- aprire https://pier-200.github.io/GestionaleTypeTraining/ → **Configurazione iniziale**: token, username, grado
+- aprire https://4-scorpione.github.io/GestionaleTypeTraining/ → **Configurazione iniziale**: token, username, grado
   nome e cognome, password del Training Manager → **Configura e accedi**;
 - oppure da riga di comando, nella cartella del progetto:
 

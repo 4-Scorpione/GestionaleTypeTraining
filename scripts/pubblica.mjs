@@ -38,7 +38,7 @@ try {
   nel('add', '-A');
   nel('commit', '-q', '-m', `deploy: ${gitMuto('rev-parse', '--short', 'HEAD')}`);
   nel('push', '-q', '--force', 'origin', `HEAD:${RAMO}`);
-  console.log('Pubblicato: https://pier-200.github.io/GestionaleTypeTraining/');
+  console.log('Pubblicato: https://4-scorpione.github.io/GestionaleTypeTraining/');
 } finally {
   git('worktree', 'remove', cartella, '--force');
   rmSync(cartella, { recursive: true, force: true });
