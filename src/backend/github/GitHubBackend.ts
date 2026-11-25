@@ -247,8 +247,11 @@ export class GitHubBackend implements Backend {
       if (e instanceof ErroreApp && e.codice === 'AUTENTICAZIONE' && /token/i.test(e.message)) {
         // come nel Gestionale PdS: il Training Manager rinnova il token dalla pagina di accesso, per tutti
         throw chiavi.ka
-          ? new ErroreApp('TOKEN_SCADUTO', 'Il token di accesso a GitHub è scaduto o è stato revocato. Come Training Manager puoi inserire qui un nuovo token: l’accesso torna per tutti gli utenti.')
-          : new ErroreApp('AUTENTICAZIONE', 'Il token di accesso a GitHub è scaduto o è stato revocato: il Training Manager deve rinnovarlo accedendo all’applicazione.');
+          ? new ErroreApp(
+              'TOKEN_SCADUTO',
+              `Il token di accesso a GitHub è scaduto, revocato o non ha accesso ai repository di ${this.c.owner}. Come Training Manager puoi inserire qui un nuovo token, creato dall'account ${this.c.owner}: l’accesso torna per tutti gli utenti.`,
+            )
+          : new ErroreApp('AUTENTICAZIONE', 'Il token di accesso a GitHub è scaduto, revocato o non ha accesso ai repository: il Training Manager deve rinnovarlo accedendo all’applicazione.');
       }
       throw e;
     }
@@ -339,7 +342,14 @@ export class GitHubBackend implements Backend {
   async caricaDati(): Promise<Dati> {
     const api = this.richiediApi();
     const commit = await api.leggiRef(this.c.owner, this.c.repoDati, this.c.branch);
-    if (!commit) throw new ErroreApp('CONFIGURAZIONE', `Il repository ${this.c.owner}/${this.c.repoDati} è vuoto o non accessibile.`);
+    if (!commit) {
+      // GitHub risponde 404 anche se il token non vede il repository privato
+      // (es. token creato da un altro account, prima del trasferimento dei repository)
+      if (!(await api.leggiRepository(this.c.owner, this.c.repoDati))) {
+        throw new ErroreApp('AUTENTICAZIONE', `Il token di accesso non ha accesso al repository ${this.c.owner}/${this.c.repoDati}: va sostituito.`);
+      }
+      throw new ErroreApp('CONFIGURAZIONE', `Il repository ${this.c.owner}/${this.c.repoDati} è vuoto.`);
+    }
     if (this.dati && this.testa?.commit === commit) return this.dati;
     const { albero } = await api.leggiCommit(this.c.owner, this.c.repoDati, commit);
     const tutti = (await api.leggiAlbero(this.c.owner, this.c.repoDati, albero)).filter((e) => e.type === 'blob');

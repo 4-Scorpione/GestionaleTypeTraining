@@ -11,8 +11,11 @@ const ALTRO = 'github_pat_altro_token_valido_0002';
 const MODULO = new Uint8Array([80, 75, 3, 4, 1, 2, 3]);
 const utente = (id: string, username: string, ruolo: string) => ({ id, username, ruolo, grado: '', nome: username, cognome: '', istruttore_id: null, attivo: true, deve_cambiare_password: false, created_at: '', updated_at: '' });
 
-/** Il minimo delle API di GitHub usate dall'archivio; i token validi sono quelli dell'insieme. */
-function githubFinto(validi: Set<string>) {
+/**
+ * Il minimo delle API di GitHub usate dall'archivio; i token validi sono quelli dell'insieme.
+ * I token `senzaAccesso` sono validi ma non vedono il repository privato (GitHub risponde 404).
+ */
+function githubFinto(validi: Set<string>, senzaAccesso = new Set<string>()) {
   const stato = { keyring: '', scritture: 0, letti: new Map<string, number>() };
   const blob: Record<string, Uint8Array> = {
     b1: bytesDaTesto(JSON.stringify({ formato: 1, elementi: [utente('u1', 'admin', 'admin'), utente('u2', 'mario', 'trainee')] })),
@@ -39,6 +42,7 @@ function githubFinto(validi: Set<string>) {
       return json({ content: { sha: `k${stato.scritture}` } });
     }
     // il repository dei dati, modelli compresi, risponde solo a un token valido
+    if (senzaAccesso.has(token)) return json({ message: 'Not Found' }, 404);
     if (!validi.has(token)) return json({ message: 'Bad credentials' }, 401);
     if (percorso === '/repos/o/tt-dati/git/ref/heads/main') return json({ object: { sha: 'c1' } });
     if (percorso === '/repos/o/tt-dati/git/commits/c1') return json({ tree: { sha: 't1' } });
@@ -82,6 +86,18 @@ it('token scaduto: lo rinnova solo il Training Manager, con un token che legge e
   expect((await sbloccaKeyring(validaKeyring(JSON.parse(stato.keyring)), 'mario', 'password2')).token).toBe(ALTRO);
   validi.delete(NUOVO); // il vecchio token si revoca: la sessione del TM continua con il nuovo
   expect((await b.caricaDati()).utenti).toHaveLength(2);
+});
+
+it('dopo il trasferimento dei repository il token del vecchio account si rinnova dalla pagina di accesso', async () => {
+  const vecchio = 'github_pat_token_del_vecchio_account_0';
+  const { stato, fetchFinto } = githubFinto(new Set([NUOVO]), new Set([vecchio]));
+  const { keyring } = await creaKeyring(vecchio, 'admin', 'password1', 1000);
+  stato.keyring = JSON.stringify(keyring);
+  vi.stubGlobal('fetch', fetchFinto);
+  const b = new GitHubBackend(CONFIG);
+  // il token resta valido ma non vede più il repository privato dei dati
+  await expect(b.accedi('admin', 'password1', false)).rejects.toMatchObject({ codice: 'TOKEN_SCADUTO' });
+  expect((await b.rinnovaTokenEAccedi('admin', 'password1', NUOVO, false)).utente.username).toBe('admin');
 });
 
 it('i modelli stanno nel repository privato: elenco e contenuto solo dopo l’accesso, scaricati una volta', async () => {

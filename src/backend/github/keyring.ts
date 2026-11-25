@@ -214,6 +214,11 @@ export async function ruotaChiavi(keyring: Keyring, admin: ChiaviSessione, nuovo
       custodia: await cifra(await chiave(ka), bytesDaBase64(ku)),
     };
   }
+  // Se le chiavi dell'amministratore non aprono la sua stessa voce, il portachiavi è cambiato
+  // nel frattempo (es. una rotazione appena eseguita): proseguire escluderebbe tutti gli utenti.
+  if (!utenti[await idVoce(admin.username)]) {
+    throw new ErroreApp('CONFLITTO', 'Il portachiavi è cambiato nel frattempo: uscire, accedere di nuovo e ripetere la sostituzione del token.');
+  }
   const token = await cifra(await chiave(k), bytesDaTesto(nuovoToken));
   return { keyring: successivo(keyring, utenti, token), chiavi: { ...admin, k, ka, token: nuovoToken } };
 }
