@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 
 const CAMPO = 'input, textarea, select, [role="combobox"]';
 
-/** Campi che non aprono la tastiera (tendine pure) o con la tendina aperta: lì non si scorre, la tendina si posiziona da sola. */
-const daIgnorare = (el: HTMLElement) => (el as HTMLInputElement).readOnly || el.getAttribute('aria-expanded') === 'true';
+/** Campi che non aprono la tastiera (tendine native o in sola lettura) o con la tendina aperta: lì non si scorre. */
+const daIgnorare = (el: HTMLElement) => el.tagName === 'SELECT' || (el as HTMLInputElement).readOnly || el.getAttribute('aria-expanded') === 'true';
 
 /**
  * Sul telefono la tastiera copre il campo appena toccato (task, luogo, minuti):

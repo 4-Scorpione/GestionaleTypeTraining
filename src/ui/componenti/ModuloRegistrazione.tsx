@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Drawer, Group, NumberInput, SegmentedControl, Select, Stack, Text, TextInput } from '@mantine/core';
+import { Button, Drawer, Group, NativeSelect, NumberInput, SegmentedControl, Select, Stack, Text, TextInput } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';
 import { nuovoUuid } from '../../backend/github/crittografia';
@@ -23,6 +23,50 @@ interface Props {
 }
 
 const MINUTI_RAPIDI = [15, 30, 45, 60, 90, 120];
+
+interface PropsTendina {
+  mobile: boolean;
+  label: string;
+  placeholder: string;
+  data: { value: string; label: string }[];
+  value: string;
+  onChange: (valore: string) => void;
+  error?: string;
+  searchable?: boolean;
+  nothingFoundMessage?: string;
+}
+
+/**
+ * Tendina obbligatoria. Sul telefono è quella nativa del sistema: la tendina di Mantine, aprendosi,
+ * faceva scorrere il modulo in cima (scrollIntoView dell'opzione scelta prima di posizionarsi) e la scelta spariva.
+ */
+function Tendina({ mobile, placeholder, data, value, onChange, searchable, nothingFoundMessage, ...comuni }: PropsTendina) {
+  if (mobile)
+    return (
+      <NativeSelect
+        {...comuni}
+        required
+        value={value}
+        onChange={(e) => onChange(e.currentTarget.value)}
+        data={[{ value: '', label: placeholder, disabled: true }, ...data]}
+      />
+    );
+  return (
+    <Select
+      {...comuni}
+      required
+      placeholder={placeholder}
+      searchable={searchable}
+      nothingFoundMessage={nothingFoundMessage}
+      value={value || null}
+      onChange={(v) => onChange(v ?? '')}
+      data={data}
+      // ritoccare la voce già proposta non deve svuotare il campo
+      allowDeselect={false}
+      comboboxProps={{ withinPortal: true, middlewares: { flip: true, shift: true } }}
+    />
+  );
+}
 
 /** Form della registrazione, pensato per il pollice: campi in colonna, valori recenti già proposti. */
 export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, taskId, modifica }: Props) {
@@ -173,16 +217,14 @@ export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, task
 
             {campi.tipo_esecuzione === 'AC' &&
               (aeromobili.length ? (
-                <Select
+                <Tendina
+                  mobile={Boolean(mobile)}
                   label="Aeromobile"
                   placeholder="Scegli l’identificativo"
-                  value={campi.matricola || null}
-                  onChange={(v) => aggiorna({ matricola: v ?? '' })}
-                  data={aeromobili}
+                  value={campi.matricola}
+                  onChange={(v) => aggiorna({ matricola: v })}
+                  data={aeromobili.map((a) => ({ value: a, label: a }))}
                   error={errori.matricola}
-                  allowDeselect={false}
-                  comboboxProps={{ withinPortal: true }}
-                  required
                 />
               ) : (
                 <TextInput
@@ -241,20 +283,16 @@ export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, task
               </fieldset>
             ) : (
               <div>
-                <Select
+                <Tendina
+                  mobile={Boolean(mobile)}
                   label="Instructor"
                   placeholder="Chi ha supervisionato il task"
-                  // sul telefono è una tendina pura: niente tastiera, che faceva saltare la tendina
-                  searchable={!mobile}
-                  // ritoccare l'istruttore già proposto non deve svuotare il campo
-                  allowDeselect={false}
-                  value={campi.instructor_id || null}
-                  onChange={(v) => aggiorna({ instructor_id: v ?? '' })}
+                  searchable
+                  value={campi.instructor_id}
+                  onChange={(v) => aggiorna({ instructor_id: v })}
                   data={istruttori.map((i) => ({ value: i.id, label: nomeIstruttore(i) }))}
-                  comboboxProps={{ withinPortal: true, middlewares: { flip: true, shift: true } }}
                   error={errori.instructor_id}
                   nothingFoundMessage="Non in elenco: aggiungilo qui sotto"
-                  required
                 />
                 <Button variant="subtle" size="compact-sm" mt={6} leftSection={<IconPlus size={15} />} onClick={() => setNuovoIstr({ grado: '', nome: '', cognome: '' })}>
                   Istruttore non in elenco
