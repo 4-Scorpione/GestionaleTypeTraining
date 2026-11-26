@@ -1,5 +1,5 @@
 import type { Corso, Utente } from '../../dominio/tipi';
-import { formatoData, formatoMinuti, istruttoriDi, registrazioniDi } from '../../dominio/viste';
+import { formatoData, formatoMinuti, istruttoriDi, registrazioniDi, voceIstruttoreDi } from '../../dominio/viste';
 import { IntestazionePagina } from '../componenti/disegno';
 import { ConFrequentatore } from '../componenti/Frequentatore';
 import { useStato } from '../stato';
@@ -13,7 +13,7 @@ function IstruttoriDi({ f, corso }: { f: Utente; corso: Corso }) {
   const { dati, utente } = useStato();
   if (!dati || !utente) return null;
   const righe = istruttoriDi(dati, registrazioniDi(dati, corso.id, f.id));
-  const mio = utente.ruolo === 'instructor' ? utente.istruttore_id : null;
+  const mio = utente.ruolo === 'instructor' ? (voceIstruttoreDi(dati, utente)?.id ?? null) : null;
   return (
     <>
       <IntestazionePagina titolo="Practical instructor(s)" sotto="Elenco compilato automaticamente dalle registrazioni del logbook." />

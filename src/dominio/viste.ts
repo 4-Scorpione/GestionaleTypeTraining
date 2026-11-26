@@ -80,6 +80,49 @@ export function nomeDirettore(dati: Dati, corso: Corso, modulo = false): string 
 /** Istruttori nominati per la fase pratica del corso. */
 export const istruttoriPratica = (dati: Dati, corso: Corso): Utente[] => inOrdineAlfabetico(dati, dati.utenti.filter((u) => corso.istruttori_pratica.includes(u.id)));
 
+/** Nominativo confrontabile: senza differenze di maiuscole e spazi. */
+export const chiaveIstruttore = (i: Pick<Istruttore, 'grado' | 'nome' | 'cognome'>) =>
+  [i.grado, i.nome, i.cognome].map((s) => s.trim().toLowerCase().replace(/\s+/g, ' ')).join('|');
+
+/**
+ * Voce dell'elenco istruttori pratici che corrisponde all'account: quella collegata nella pagina Account,
+ * quella nata alla prima registrazione con l'account (stesso id) o quella con lo stesso nominativo.
+ */
+export function voceIstruttoreDi(dati: Dati, u: Utente): Istruttore | undefined {
+  return (
+    dati.istruttori.find((i) => i.id === u.istruttore_id) ??
+    dati.istruttori.find((i) => i.id === u.id) ??
+    dati.istruttori.find((i) => chiaveIstruttore(i) === chiaveIstruttore(u))
+  );
+}
+
+export interface SceltaIstruttore {
+  id: ID;
+  nominativo: string;
+  /** Voce da aggiungere all'elenco istruttori pratici al salvataggio: istruttore della fase pratica mai indicato prima. */
+  crea?: Pick<Istruttore, 'id' | 'grado' | 'nome' | 'cognome'>;
+}
+
+/**
+ * Tendina «Instructor» della registrazione: prima gli istruttori nominati per la fase pratica del corso,
+ * poi gli istruttori già indicati nelle registrazioni del corso (esterni aggiunti a mano) e quello attuale.
+ */
+export function scelteIstruttore(dati: Dati, corso: Corso, attuale?: ID | null): SceltaIstruttore[] {
+  const pratica: SceltaIstruttore[] = istruttoriPratica(dati, corso).map((u) => {
+    const voce = voceIstruttoreDi(dati, u);
+    return voce
+      ? { id: voce.id, nominativo: nomeIstruttore(voce) }
+      : { id: u.id, nominativo: nomeUtente(dati, u.id), crea: { id: u.id, grado: u.grado, nome: u.nome, cognome: u.cognome } };
+  });
+  const presi = new Set(pratica.map((s) => s.id));
+  const usati = new Set([...dati.registrazioni.filter((r) => r.corso_id === corso.id).map((r) => r.instructor_id), attuale]);
+  const altri = dati.istruttori
+    .filter((i) => usati.has(i.id) && !presi.has(i.id))
+    .sort((a, b) => a.cognome.localeCompare(b.cognome))
+    .map((i) => ({ id: i.id, nominativo: nomeIstruttore(i) }));
+  return [...pratica, ...altri];
+}
+
 /** Istruttori che seguono il corso: il direttore, quelli della fase pratica e chi vi ha lezioni a calendario. */
 export function staffDi(dati: Dati, corso: Corso): Utente[] {
   const ids = new Set([...corso.istruttori_pratica, direttoreDi(dati, corso.id)?.id, ...dati.lezioni.filter((l) => l.corso_id === corso.id).map((l) => l.istruttore_id)]);

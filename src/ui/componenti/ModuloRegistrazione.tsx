@@ -7,7 +7,7 @@ import { indice, programmaPratico } from '../../dominio/programmi';
 import { ErroreApp } from '../../dominio/errori';
 import { oggiISO, validaRegistrazione, type CampiRegistrazione } from '../../dominio/motore';
 import type { Corso, Registrazione, TipoEsecuzione, Utente } from '../../dominio/tipi';
-import { nomeIstruttore } from '../../dominio/viste';
+import { istruttoriPratica, scelteIstruttore } from '../../dominio/viste';
 import { useStato } from '../stato';
 import { useCampoVisibile } from './tastiera';
 
@@ -31,6 +31,7 @@ interface PropsTendina {
   data: { value: string; label: string }[];
   value: string;
   onChange: (valore: string) => void;
+  description?: string;
   error?: string;
   searchable?: boolean;
   nothingFoundMessage?: string;
@@ -110,15 +111,20 @@ export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, task
   if (!dati || !programma) return null;
   // gli aeromobili sono quelli inseriti nei dati del corso (una registrazione già salvata conserva il suo)
   const aeromobili = [...new Set([...corso.aeromobili, ...(modifica?.tipo_esecuzione === 'AC' && modifica.matricola ? [modifica.matricola] : [])])];
-  const istruttori = [...dati.istruttori].sort((a, b) => a.cognome.localeCompare(b.cognome));
+  // gli istruttori della fase pratica del corso, poi quelli già indicati nelle registrazioni del corso
+  const scelte = scelteIstruttore(dati, corso, campi?.instructor_id);
+  const senzaPratica = !istruttoriPratica(dati, corso).length;
   const task = campi ? indice(programma).taskPerId.get(campi.task_id) : undefined;
   const aggiorna = (x: Partial<CampiRegistrazione>) => setCampi((c) => (c ? { ...c, ...x } : c));
 
   async function salva() {
     if (!campi || !dati) return;
-    const idNuovo = nuovoIstr ? nuovoUuid() : null;
-    const pronta = { ...campi, instructor_id: idNuovo ?? campi.instructor_id };
-    const elenco = idNuovo && nuovoIstr ? [...dati.istruttori, { id: idNuovo, ...nuovoIstr, created_at: '', created_by: null }] : dati.istruttori;
+    // istruttore aggiunto a mano, oppure istruttore della fase pratica che entra ora nell'elenco istruttori pratici
+    const daCreare = nuovoIstr ? { id: nuovoUuid(), ...nuovoIstr } : (scelte.find((s) => s.id === campi.instructor_id)?.crea ?? null);
+    if (daCreare && !nuovoIstr && ![daCreare.grado, daCreare.nome, daCreare.cognome].every((s) => s.trim()))
+      return setErrori({ instructor_id: 'Nell’account di questo istruttore mancano grado, nome o cognome: li completa il Training Manager in «Account».' });
+    const pronta = { ...campi, instructor_id: daCreare?.id ?? campi.instructor_id };
+    const elenco = daCreare ? [...dati.istruttori, { ...daCreare, created_at: '', created_by: null }] : dati.istruttori;
     try {
       validaRegistrazione(pronta, oggiISO(), elenco, corso.programma_pratico);
     } catch (e) {
@@ -127,10 +133,10 @@ export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, task
     }
     setSalvataggio(true);
     try {
-      if (idNuovo && nuovoIstr) {
-        if (!(await esegui({ tipo: 'istruttore.crea', istruttore: { id: idNuovo, ...nuovoIstr } }))) return;
+      if (daCreare) {
+        if (!(await esegui({ tipo: 'istruttore.crea', istruttore: daCreare }))) return;
         setNuovoIstr(null);
-        aggiorna({ instructor_id: idNuovo });
+        aggiorna({ instructor_id: daCreare.id });
       }
       if (await esegui({ tipo: 'registrazione.salva', registrazione: pronta }, modifica ? 'Registrazione aggiornata' : `Task ${pronta.task_id} registrato`)) {
         segnaAppena(pronta.task_id);
@@ -290,7 +296,8 @@ export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, task
                   searchable
                   value={campi.instructor_id}
                   onChange={(v) => aggiorna({ instructor_id: v })}
-                  data={istruttori.map((i) => ({ value: i.id, label: nomeIstruttore(i) }))}
+                  data={scelte.map((s) => ({ value: s.id, label: s.nominativo }))}
+                  description={senzaPratica ? 'Nessun istruttore della fase pratica nei dati del corso: si nominano in «Modifica corso».' : undefined}
                   error={errori.instructor_id}
                   nothingFoundMessage="Non in elenco: aggiungilo qui sotto"
                 />

@@ -1,6 +1,7 @@
 import { ErroreApp } from './errori';
 import { chapterDelMds, materiaDi, mdsDi, indice, programmaPratico, programmaTeorico, programmiPer } from './programmi';
 import { MINUTI_PERIODO, inOrdine, indiceGiorno, periodiDelGiorno } from './pianificazione';
+import { chiaveIstruttore } from './viste';
 import { conIstruttore, conMateria, conPersona, type Abilitazione, type Anagrafica, type Certificato, type Corso, type Dati, type DatiTraining, type EsitoProva, type ID, type Iscrizione, type Istruttore, type Lezione, type Presenza, type Rapportino, type Registrazione, type RuoloNelCorso, type StatoCertificato, type StatoPresenza, type TipoCertificato, type TipoEsecuzione, type TipoPeriodo, type Utente } from './tipi';
 
 /**
@@ -193,9 +194,6 @@ const sostituisci = <T,>(lista: T[], trova: (x: T) => boolean, nuovo: T) => {
   const i = lista.findIndex(trova);
   return i < 0 ? [...lista, nuovo] : lista.map((x, j) => (j === i ? nuovo : x));
 };
-
-const chiaveIstruttore = (i: Pick<Istruttore, 'grado' | 'nome' | 'cognome'>) =>
-  [i.grado, i.nome, i.cognome].map((s) => s.trim().toLowerCase().replace(/\s+/g, ' ')).join('|');
 
 export function applica(dati: Dati, comando: Comando, ctx: Contesto): Esito {
   const io = dati.utenti.find((u) => u.id === ctx.utenteId);

@@ -9,7 +9,7 @@ import { assenzeDi } from '../src/dominio/presenze';
 import { PROGRAMMI_PRATICI, PROGRAMMI_TEORICI, chapterDelMds, programmaTeorico } from '../src/dominio/programmi';
 import { aggiornaDati, type Dati, type TipoPeriodo } from '../src/dominio/tipi';
 import { menuPer, puoAprire } from '../src/ui/navigazione';
-import { abilitatiPer, nomeUtente, fineCorso, formatoFine, frequentatori, impegniDi, lezioniDi, nomeDirettore, presenzeDi, rapportiniDi, registrazioniDi, situazione } from '../src/dominio/viste';
+import { abilitatiPer, nomeUtente, fineCorso, formatoFine, frequentatori, impegniDi, lezioniDi, nomeDirettore, presenzeDi, rapportiniDi, registrazioniDi, scelteIstruttore, situazione, voceIstruttoreDi } from '../src/dominio/viste';
 
 const ctx = (utenteId: string) => ({ utenteId, ora: '2026-09-22T10:00:00.000Z', oggi: '2026-09-22' });
 const dati = datiEsempio();
@@ -201,6 +201,24 @@ describe('logbook e account', () => {
     expect(applica(dati, cmd('u-fontana'), ctx('u-neri')).dati.anagrafiche.some((a) => a.user_id === 'u-fontana')).toBe(true);
     expect(() => applica(dati, cmd('u-fontana'), ctx('u-fontana'))).toThrow(/Training Manager|permessi/); // nemmeno i propri
     expect(() => applica(dati, cmd('u-fontana'), ctx('u-rinaldi'))).toThrow(/Training Manager|permessi/);
+  });
+
+  it('la tendina Instructor propone gli istruttori della fase pratica e gli esterni già indicati nel corso', () => {
+    const c1 = corso(dati, C1);
+    // u-colombo e u-rinaldi sono nominati per la fase pratica e collegati alle loro voci dell'elenco
+    expect(scelteIstruttore(dati, c1).slice(0, 2).map((s) => s.id)).toEqual(['ist-colombo', 'ist-rinaldi']);
+    // una voce di prova mai indicata nelle registrazioni del corso non compare, salvo sia quella attuale
+    const conProva = { ...dati, istruttori: [...dati.istruttori, { id: 'ist-prova', grado: 'Sgt.', nome: 'Mario', cognome: 'Prova', created_at: '', created_by: 'u-gallo' }] };
+    expect(scelteIstruttore(conProva, c1).some((s) => s.id === 'ist-prova')).toBe(false);
+    expect(scelteIstruttore(conProva, c1, 'ist-prova').some((s) => s.id === 'ist-prova')).toBe(true);
+    // istruttore della fase pratica senza voce: si propone l'account e la voce nasce al salvataggio con lo stesso id
+    const conNeri = { ...dati, corsi: dati.corsi.map((c) => (c.id === C1 ? { ...c, istruttori_pratica: [...c.istruttori_pratica, 'u-neri'] } : c)) };
+    const neri = scelteIstruttore(conNeri, corso(conNeri, C1)).find((s) => s.id === 'u-neri')!;
+    expect(neri.crea).toEqual({ id: 'u-neri', grado: 'Cap.', nome: 'Marco', cognome: 'Neri' });
+    const dopo = applica(conNeri, { tipo: 'istruttore.crea', istruttore: neri.crea! }, ctx('u-gallo')).dati;
+    expect(applica(dopo, reg('u-gallo', { instructor_id: 'u-neri' }), ctx('u-gallo')).dati.registrazioni.some((r) => r.id === 'nuova')).toBe(true);
+    expect(scelteIstruttore(dopo, corso(dopo, C1)).find((s) => s.id === 'u-neri')?.crea).toBeUndefined();
+    expect(voceIstruttoreDi(dopo, utente(dopo, 'u-neri'))?.id).toBe('u-neri');
   });
 
   it('istruttori duplicati rifiutati', () => {
