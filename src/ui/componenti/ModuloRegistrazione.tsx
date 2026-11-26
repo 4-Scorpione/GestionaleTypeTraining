@@ -244,7 +244,10 @@ export function ModuloRegistrazione({ aperto, chiudi, frequentatore, corso, task
                 <Select
                   label="Instructor"
                   placeholder="Chi ha supervisionato il task"
-                  searchable
+                  // sul telefono è una tendina pura: niente tastiera, che faceva saltare la tendina
+                  searchable={!mobile}
+                  // ritoccare l'istruttore già proposto non deve svuotare il campo
+                  allowDeselect={false}
                   value={campi.instructor_id || null}
                   onChange={(v) => aggiorna({ instructor_id: v ?? '' })}
                   data={istruttori.map((i) => ({ value: i.id, label: nomeIstruttore(i) }))}

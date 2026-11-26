@@ -83,6 +83,14 @@ await page.getByRole('combobox', { name: 'Aeromobile' }).click();
 const aeromobili = await page.getByRole('option').allInnerTexts();
 assert.ok(aeromobili.length > 1 && aeromobili.every((a) => /EI-?\d+$/.test(a)), `aeromobili del corso nella tendina: ${aeromobili}`);
 await page.getByRole('option').first().click();
+// sul telefono l'istruttore è una tendina pura: niente tastiera; ritoccare quello già proposto non svuota il campo
+const tendinaIstruttore = page.getByRole('combobox', { name: 'Instructor' });
+assert.ok(await tendinaIstruttore.evaluate((el) => el.readOnly), 'la tendina dell’istruttore non apre la tastiera sul telefono');
+await tendinaIstruttore.click();
+const sceltaIstruttore = page.getByRole('option').first();
+const nomeIstruttore = (await sceltaIstruttore.innerText()).trim();
+await sceltaIstruttore.click();
+assert.equal(await tendinaIstruttore.inputValue(), nomeIstruttore, 'istruttore scelto dalla tendina');
 await page.getByLabel(/ET – tempo stimato/).fill('35');
 await page.getByRole('button', { name: 'Salva' }).click();
 await page.waitForSelector('.task.eseguito');
